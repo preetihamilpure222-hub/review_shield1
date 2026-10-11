@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Methodology{% endblock %}
+{% block h1 %}Methodology{% endblock %}
+{% block sub %}How ReviewShield AI scores a review{% endblock %}
+{% block body %}
+<div class="grid g3">
+ <div class="card"><span class="badge b-accent">Model 1</span><h3 style="margin-top:10px">Fake-review detector</h3><p class="sub">TF-IDF (1–2 grams, 20k features) + Multinomial Naive Bayes, trained on Amazon product reviews and hotel reviews. Outputs the probability a review is deceptive.</p></div>
+ <div class="card"><span class="badge b-accent">Model 2</span><h3 style="margin-top:10px">Sentiment &amp; rating predictor</h3><p class="sub">TF-IDF + Logistic Regression (sentiment: {{ sent.sentiment_accuracy }}% accuracy) and Ridge regression (star rating, ±{{ sent.rating_mae }} stars). Trained on {{ '{:,}'.format(sent.train_size) }} Amazon reviews.</p></div>
+ <div class="card"><span class="badge b-accent">Layer 3</span><h3 style="margin-top:10px">Behavioural red flags</h3><p class="sub">Duplicate text, shouting, excessive exclamation, promotional phrases, very short text, and mismatch between the star rating and the wording.</p></div>
+</div>
+<div class="card mt"><h3>Final risk score</h3>
+<p style="margin:8px 0;color:#475569"><b>Risk = {{ (weights[0]*100)|int }}% × AI fake probability + {{ (weights[1]*100)|int }}% × rule score.</b>
+A review is <span class="badge b-bad">Suspicious</span> at risk ≥ {{ (th[0]*100)|int }}, <span class="badge b-warn">Uncertain</span> from {{ (th[1]*100)|int }}, otherwise <span class="badge b-good">Genuine</span>. Thresholds are set in <code>apps/predictor.py</code>.</p>
+<p style="color:#475569"><b>Trust score</b> = 100 − average risk across all reviews. <b>Trusted rating</b> = average star rating after excluding suspicious reviews.</p></div>
+<div class="card mt"><h3>Forecasting</h3><p class="sub" style="margin-top:6px">When reviews include dates, ratings (or predicted ratings) and suspicious-review share are averaged per month and a linear trend is projected 3 months ahead with a shaded range. It needs at least 4 distinct months of data and is a simple trend line, not a guarantee.</p></div>
+<div class="card mt"><h3>Fake-review model (v3) — held-out test performance</h3>
+<p class="sub" style="margin-top:6px">Two-stage stacked model: TF-IDF + Logistic Regression → Gradient Boosting on stylometric features (+ rating &amp; verified purchase when available). Trained on 3 datasets (Amazon 21,000 · Hotel deceptive-opinion 1,600 · Social/Yelp-style 21,476).</p>
+<table class="tbl"><thead><tr><th>Mode</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>Test reviews</th></tr></thead><tbody>
+<tr><td>Text only (all domains)</td><td>{{ fake.text.accuracy }}%</td><td>{{ fake.text.precision }}%</td><td>{{ fake.text.recall }}%</td><td>{{ fake.text.f1 }}%</td><td>{{ fake.text.test_size }}</td></tr>
+<tr><td>Text + rating + verified purchase</td><td>{{ fake.meta.accuracy }}%</td><td>{{ fake.meta.precision }}%</td><td>{{ fake.meta.recall }}%</td><td>{{ fake.meta.f1 }}%</td><td>{{ fake.meta.test_size }}</td></tr>
+</tbody></table>
+<p class="sub" style="margin-top:8px">Text-only by domain: Hotel {{ fake.text.domains.hotel.accuracy }}% · Product {{ fake.text.domains.product.accuracy }}% · Social {{ fake.text.domains.social.accuracy }}%.</p></div>
+<div class="card mt"><h3>Limitations</h3>
+<ul style="margin:8px 0 0 18px;color:#475569;line-height:1.8"><li>The detector was trained on Amazon, hotel and social-review data; text alone gives ~68% accuracy, so supply ratings/verified status where possible. Accuracy drops on unseen domains (see Overview), so Flipkart results are indicative.</li><li>Models read English text. Hinglish or regional-language reviews will be less reliable.</li><li>Text-only models cannot see reviewer history, purchase verification or posting bursts unless those columns are provided.</li><li>Always confirm important decisions manually.</li></ul></div>
+{% endblock %}
