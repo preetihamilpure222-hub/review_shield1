@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Single Review{% endblock %}
+{% block h1 %}Single review check{% endblock %}
+{% block sub %}Paste any review from Amazon, Flipkart or elsewhere{% endblock %}
+{% block body %}
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+<div class="grid {{ 'g-2-1' if result else '' }}">
+ <div class="card">
+  <form method="post" data-load>
+    <label>Review text</label>
+    <textarea name="review" placeholder="Paste a review here…" required>{{ review }}</textarea>
+    <div class="row mt"><div><label>Star rating given (optional)</label><input type="number" name="rating" min="1" max="5" step="0.5" value="{{ rating }}" placeholder="e.g. 5"></div><div><label>Verified purchase?</label><select name="verified"><option value="">Unknown</option><option value="yes" {{ 'selected' if request.form.get('verified')=='yes' }}>Yes</option><option value="no" {{ 'selected' if request.form.get('verified')=='no' }}>No</option></select></div><div style="align-self:flex-end"><button class="btn" style="width:100%;justify-content:center">Analyse review</button></div></div>
+  </form>
+ </div>
+ {% if result %}
+ <div class="card gauge-wrap">
+   <h3>Fake-risk score</h3><div class="sub">0 = very likely genuine · 100 = very likely fake</div>
+   <div style="height:150px"><canvas id="g"></canvas></div>
+   <div class="gauge-num">{{ result.risk|round|int }}</div>
+   <p style="margin-top:6px"><span class="badge {{ 'b-bad' if result.verdict=='Suspicious' else ('b-warn' if result.verdict=='Uncertain' else 'b-good') }}" style="font-size:14px;padding:5px 14px">{{ result.verdict }}</span></p>
+ </div>
+ {% endif %}
+</div>
+{% if result %}
+<div class="grid g3 mt">
+ <div class="card"><h3>Predictions</h3><div class="sub">Model used: <b>{{ result.model_used }}</b> (adding rating + verified status raises accuracy from ~68% to ~82%)</div>
+  <div class="stat"><span>AI fake probability</span><b>{{ result.ml_fake_prob }}%</b></div>
+  <div class="stat"><span>Rule-based score</span><b>{{ result.rule_score }}</b></div>
+  <div class="stat"><span>Sentiment</span><b style="text-transform:capitalize">{{ result.sentiment }}</b></div>
+  <div class="stat"><span>Predicted star rating</span><b>{{ result.predicted_stars }} ★</b></div></div>
+ <div class="card"><h3>Red flags</h3><div class="sub">Rule-based checks</div>
+  {% for f in result.flags %}<div class="flag"><span class="badge b-warn">!</span><div>{{ f }}</div></div>{% else %}<div class="empty" style="padding:18px">No red flags found ✓</div>{% endfor %}</div>
+ <div class="card"><h3>Why this score?</h3><div class="sub">Words that moved the AI model. These are statistical correlations from the training data (often product-topic words), not proof about the reviewer.</div>
+  <p style="font-size:12.5px;color:var(--muted)">Towards <b>fake</b></p>{% for w in result.explanation.fake %}<span class="chip f">{{ w }}</span>{% else %}<span style="color:var(--muted)">–</span>{% endfor %}
+  <p style="font-size:12.5px;color:var(--muted);margin-top:10px">Towards <b>genuine</b></p>{% for w in result.explanation.genuine %}<span class="chip g">{{ w }}</span>{% else %}<span style="color:var(--muted)">–</span>{% endfor %}</div>
+</div>
+<div class="card mt"><h3>Text statistics</h3><div class="row mt">
+ {% for k,v in [('Words',result.stats.words),('Sentences',result.stats.sentences),('Characters',result.stats.characters),('Avg word length',result.stats.avg_word_len),('Exclamations',result.stats.exclamations),('ALL-CAPS words',result.stats.caps_words)] %}
+ <div class="kpi"><div class="label">{{ k }}</div><div class="value" style="font-size:22px">{{ v }}</div></div>{% endfor %}</div></div>
+<div class="note mt">This is a statistical estimate, not proof. Use it to decide which reviews deserve a closer look.</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if result %}<script>
+const v={{ result.risk }};const col=v>=45?C.bad:v>=35?C.warn:C.good;
+new Chart(g,{type:'doughnut',data:{datasets:[{data:[v,100-v],backgroundColor:[col,'#e9edf4'],borderWidth:0}]},options:{rotation:-90,circumference:180,cutout:'78%',plugins:{tooltip:{enabled:false},legend:{display:false}}}});
+</script>{% endif %}{% endblock %}
