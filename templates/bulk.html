@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Bulk Analysis{% endblock %}
+{% block h1 %}Bulk analysis{% endblock %}
+{% block sub %}Upload reviews from Amazon, Flipkart or any platform and get a full dashboard{% endblock %}
+{% block body %}
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" data-load>
+<div class="grid g-2-1">
+ <div class="card">
+  <div class="tabs"><div class="tab on" data-t="up">Upload file</div><div class="tab" data-t="paste">Paste reviews</div></div>
+  <div id="t-up">
+    <label class="drop" id="drop" for="file"><b id="fname">Drop a file here or click to browse</b><span>CSV · Excel (.xlsx) · TSV · TXT · JSON — up to 10,000 reviews</span></label>
+    <input type="file" id="file" name="file" accept=".csv,.xlsx,.xls,.tsv,.txt,.json" hidden>
+  </div>
+  <div id="t-paste" style="display:none">
+    <label>How are the pasted reviews separated?</label>
+    <select name="split" style="margin-bottom:12px"><option value="auto">Auto-detect</option><option value="single">It is ONE review (keep as a single review)</option><option value="line">One review per line</option><option value="blank">Reviews separated by a blank line</option></select>
+    <label>Reviews</label><textarea name="pasted" placeholder="Great phone, battery lasts all day…&#10;Worst purchase ever…"></textarea></div>
+  <details class="mt" id="adv" style="display:none"><summary style="cursor:pointer;font-weight:600">Advanced: choose columns manually</summary>
+    <div class="row mt">
+      <div><label>Review text column</label><select name="col_text" id="ct"></select></div>
+      <div><label>Rating column</label><select name="col_rating" id="cr"></select></div>
+      <div><label>Date column</label><select name="col_date" id="cd"></select></div>
+    </div></details>
+ </div>
+ <div class="card">
+  <label>Platform</label>
+  <select name="platform">{% for p in platforms %}<option>{{ p }}</option>{% endfor %}</select>
+  <label style="margin-top:14px">Name this analysis (optional)</label>
+  <input type="text" name="name" placeholder="e.g. Redmi Note 13 – Flipkart">
+  <button class="btn mt" style="width:100%;justify-content:center">Run analysis</button>
+  <p class="note mt">Columns for text, rating, date, product and verified-purchase are auto-detected from common Amazon / Flipkart export names. <b>Only review text is required.</b></p>
+  <p style="margin-top:12px"><a href="{{ url_for('static', filename='sample_reviews.csv') }}">⬇ Download a sample file</a></p>
+ </div>
+</div>
+</form>
+<div class="card mt"><h3>Getting reviews out of Amazon / Flipkart</h3><div class="sub">This app analyses files you provide – it does not scrape sites</div>
+<p style="color:#475569">Use a browser extension or review-export tool of your choice, a seller-dashboard export, or the official data you have access to, then upload the CSV/Excel here. Sites' terms generally forbid automated scraping, so keep to data you are allowed to use. Developers can also call <code>POST /api/analyze</code> from their own tools.</p></div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+ document.getElementById('t-up').style.display=t.dataset.t==='up'?'':'none';document.getElementById('t-paste').style.display=t.dataset.t==='paste'?'':'none';});
+const f=document.getElementById('file'),drop=document.getElementById('drop');
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,()=>drop.classList.remove('over')));
+drop.addEventListener('drop',ev=>{ev.preventDefault();f.files=ev.dataTransfer.files;f.dispatchEvent(new Event('change'))});
+function splitHeader(line){const d=line.includes('\t')?'\t':',';const out=[];let cur='',q=false;for(const ch of line){if(ch==='"')q=!q;else if(ch===d&&!q){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out.map(s=>s.trim()).filter(Boolean)}
+f.addEventListener('change',()=>{const file=f.files[0];if(!file)return;document.getElementById('fname').textContent='✓ '+file.name+' ('+(file.size/1024).toFixed(0)+' KB)';
+ if(!/\.(csv|tsv|txt)$/i.test(file.name)){document.getElementById('adv').style.display='none';return}
+ file.slice(0,8192).text().then(t=>{const cols=splitHeader(t.split(/\r?\n/)[0]);if(cols.length<2)return;
+  const opt=(first)=>`<option value="">${first}</option>`+cols.map(c=>`<option>${c.replace(/</g,'&lt;')}</option>`).join('');
+  ct.innerHTML=opt('Auto-detect');cr.innerHTML=opt('Auto-detect');cd.innerHTML=opt('None / auto');adv.style.display='';});});
+</script>
+{% endblock %}
