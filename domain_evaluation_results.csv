@@ -1,0 +1,3 @@
+Domain,Test Reviews,Accuracy,Precision,Recall,F1 Score
+product,4175,66.51,66.57,66.19,66.38
+hotel,344,84.01,79.41,92.57,85.49

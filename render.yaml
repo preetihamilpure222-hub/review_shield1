@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: reviewshield-ai
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 180 --bind 0.0.0.0:$PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      # Optional: uncomment to protect the site with a password (username can be anything)
+      # - key: ACCESS_PASSWORD
+      #   value: choose-a-password

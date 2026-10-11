@@ -1,0 +1,3 @@
+Experiment,Training Domain,Testing Domain,Test Reviews,Accuracy (%),Precision (%),Recall (%),F1 Score (%)
+A: Product to Hotel,Product,Hotel,1596,62.03,67.9,46.0,54.84
+B: Hotel to Product,Hotel,Product,20999,55.4,57.16,43.14,49.17

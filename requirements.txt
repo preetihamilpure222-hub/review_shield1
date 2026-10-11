@@ -1,0 +1,11 @@
+flask>=3.0
+gunicorn
+pandas>=2.0
+numpy
+scipy
+scikit-learn==1.9.1
+joblib
+openpyxl
+requests
+beautifulsoup4
+lxml
