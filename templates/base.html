@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}ReviewShield AI{% endblock %} · ReviewShield AI</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head><body>
+{% macro ico(n) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+{% if n=='grid' %}<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+{% elif n=='scan' %}<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 12h8"/>
+{% elif n=='upload' %}<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+{% elif n=='link' %}<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>
+{% elif n=='clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+{% else %}<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>{% endif %}</svg>
+{%- endmacro %}
+<aside class="sidebar">
+  <div class="brand"><div class="brand-mark">🛡️</div><div><b>ReviewShield AI</b><small>Fake review intelligence</small></div></div>
+  <nav class="nav">
+    <div class="nav-label">Workspace</div>
+    <a href="{{ url_for('index') }}" class="{{ 'active' if page=='overview' }}">{{ ico('grid') }}Overview</a>
+    <a href="{{ url_for('bulk') }}" class="{{ 'active' if page=='bulk' }}">{{ ico('upload') }}Bulk Analysis</a>
+    <a href="{{ url_for('url_analysis') }}" class="{{ 'active' if page=='url' }}">{{ ico('link') }}URL Analysis</a>
+    <a href="{{ url_for('analyze') }}" class="{{ 'active' if page=='analyze' }}">{{ ico('scan') }}Single Review</a>
+    <a href="{{ url_for('history') }}" class="{{ 'active' if page=='history' }}">{{ ico('clock') }}History</a>
+    <div class="nav-label">Resources</div>
+    <a href="{{ url_for('about') }}" class="{{ 'active' if page=='about' }}">{{ ico('info') }}Methodology</a>
+  </nav>
+  <div class="side-foot"><span class="dot"></span><b style="color:#fff">Models online</b><br>Fake detector · Sentiment · Rating predictor</div>
+</aside>
+<div class="main">
+  <div class="topbar"><div><h1>{% block h1 %}{% endblock %}</h1><p>{% block sub %}{% endblock %}</p></div><div>{% block actions %}{% endblock %}</div></div>
+  <div class="content">{% block body %}{% endblock %}</div>
+</div>
+<div class="loading" id="loading"><div><div class="spin"></div>Analysing reviews…</div></div>
+<script>
+Chart.defaults.font.family='Inter,"Segoe UI",system-ui,sans-serif';Chart.defaults.color='#64748b';
+Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.maintainAspectRatio=false;
+const C={good:'#16a34a',warn:'#d97706',bad:'#dc2626',accent:'#4f46e5',grey:'#cbd5e1',cyan:'#06b6d4'};
+document.querySelectorAll('form[data-load]').forEach(f=>f.addEventListener('submit',()=>document.getElementById('loading').classList.add('on')));
+</script>
+{% block scripts %}{% endblock %}
+</body></html>
